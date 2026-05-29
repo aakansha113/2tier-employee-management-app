@@ -344,10 +344,10 @@ terraform/
 ```
 🔹 Key Features
 
-✔ Infrastructure provisioning using code
-✔ Reusable and scalable AWS setup
-✔ No manual EC2 creation
-✔ Easy environment replication
+- ✔ Infrastructure provisioning using code
+- ✔ Reusable and scalable AWS setup
+- ✔ No manual EC2 creation
+- ✔ Easy environment replication
 
 🔹 Terraform Commands Used
 ```
