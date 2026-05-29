@@ -72,6 +72,13 @@ aws-2tier-employee-management-app/
 │   ├── mysql.yaml
 │   ├── configmap.yaml
 │   ├── secret.yaml
+|── k8s/
+│   ├── script.sh
+│   ├── variable.tf
+│   ├── provider.tf
+│   ├── output.tf
+│   ├── main.tf
+|   ├── main.tf
 |
 ├── README.md
 └── .gitignore
@@ -93,6 +100,10 @@ aws-2tier-employee-management-app/
 ✅ Cloud-Based Deployment
 
 ✅ Real 2-Tier Architecture Implementation
+
+✅ Infrastructure as Code (Terraform)
+
+✅ End-to-End Cloud DevOps Workflow
 
 ##  PHASE-1 🔧 Local Setup
 Clone Repository
@@ -311,6 +322,40 @@ kubectl describe pod <pod-name>
   <img src="src/k8s-live.png" width="900"/>
 </p>
 
+## 🏗️ PHASE 6: Infrastructure as Code (Terraform)
+🔹 What I Implemented
+
+In this phase, infrastructure is fully automated using Terraform.
+
+🚀 Resources Created:
+AWS EC2 instance
+Security Group (SSH, HTTP, App port)
+Key Pair (for SSH access)
+
+🔹 Terraform Files
+
+```
+terraform/
+├── main.tf
+├── variables.tf
+├── ec2.tf
+├── security-group.tf
+├── outputs.tf
+```
+🔹 Key Features
+
+✔ Infrastructure provisioning using code
+✔ Reusable and scalable AWS setup
+✔ No manual EC2 creation
+✔ Easy environment replication
+
+🔹 Terraform Commands Used
+```
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+```
 🔹 Final Outcome
 
 - ✔ Backend running inside Kubernetes pods
