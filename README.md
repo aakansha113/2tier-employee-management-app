@@ -323,9 +323,14 @@ kubectl describe pod <pod-name>
 </p>
 
 ## 🏗️ PHASE 6: Infrastructure as Code (Terraform)
+
 🔹 What I Implemented
 
 In this phase, infrastructure is fully automated using Terraform.
+### Architecture:
+<p align="center">
+  <img src="src/terraform phase4 a.png" width="900"/>
+</p>
 
 🚀 Resources Created:
 AWS EC2 instance
@@ -356,6 +361,13 @@ terraform plan
 terraform apply
 terraform destroy
 ```
+<p align="center">
+  <img src="src/terraform-output.png" width="900"/>
+</p>
+<p align="center">
+  <img src="src/terraform-cli.png" width="900"/>
+</p>
+
 🔹 Final Outcome
 
 - ✔ Backend running inside Kubernetes pods
