@@ -1,80 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Employee Management App</title>
+  <title>Employee App</title>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
+      font-family: Arial;
+      background:#f4f4f4;
+      padding:20px;
     }
 
     .container {
-      max-width: 800px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width:700px;
+      margin:auto;
+      background:#fff;
+      padding:20px;
     }
 
     h2 {
-      text-align: center;
+      text-align:center;
     }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+    .search-box {
+      display:flex;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .search-box input {
+      flex:1;
+      padding:10px;
+    }
+
+    .search-box button {
+      width:120px;
+      background:#333;
+      color:#fff;
+      border:none;
+      cursor:pointer;
+    }
+
+    input, button {
+      width:100%;
+      padding:10px;
+      margin:5px 0;
     }
 
     button {
-      padding: 10px;
-      background: #28a745;
-      color: white;
-      border: none;
-      cursor: pointer;
-      width: 100%;
-      border-radius: 5px;
-      margin-top: 5px;
-    }
-
-    button:hover {
-      background: #218838;
+      background:green;
+      color:white;
+      border:none;
+      cursor:pointer;
     }
 
     table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
+      width:100%;
+      border-collapse:collapse;
+      margin-top:20px;
     }
 
     th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
+      border:1px solid #ddd;
+      text-align:center;
+      padding:8px;
     }
 
     th {
-      background: #007bff;
-      color: white;
+      background:#007bff;
+      color:white;
     }
 
-    .delete-btn {
-      background: red;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .delete-btn:hover {
-      background: darkred;
+    .delete {
+      background:red;
+      color:white;
+      padding:5px;
+      border:none;
+      cursor:pointer;
     }
   </style>
 </head>
@@ -82,87 +83,132 @@
 <body>
 
 <div class="container">
+
   <h2>Employee Management System</h2>
 
-  <input type="text" id="name" placeholder="Enter Name" />
-  <input type="text" id="role" placeholder="Enter Role" />
+  <!-- SEARCH -->
+  <div class="search-box">
+    <input id="search" placeholder="Search ID / Name / Role">
+    <button onclick="searchEmployee()">Search</button>
+    <button onclick="resetSearch()">Reset</button>
+  </div>
+
+  <!-- ADD FORM -->
+  <input id="name" placeholder="Name">
+  <input id="role" placeholder="Role">
+  <input id="email" placeholder="Email">
+  <input id="phone" placeholder="Phone">
+  <input id="dob" type="date">
 
   <button onclick="addEmployee()">Add Employee</button>
 
+  <!-- TABLE -->
   <table>
     <thead>
       <tr>
-        <th>ID</th>
+        <th>#</th>
         <th>Name</th>
         <th>Role</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>DOB</th>
         <th>Action</th>
       </tr>
     </thead>
-    <tbody id="empTable"></tbody>
+    <tbody id="table"></tbody>
   </table>
+
 </div>
 
 <script>
-  const API_URL = "http://localhost:3000";
 
-  /* Load Employees */
-  async function fetchEmployees() {
-    const res = await fetch(`${API_URL}/employees`);
-    const data = await res.json();
+const API = "/employees";
 
-    let rows = "";
+/* LOAD ALL */
+async function load() {
+  const res = await fetch(API);
+  const data = await res.json();
+  render(data);
+}
 
-    data.forEach(emp => {
-      rows += `
-        <tr>
-          <td>${emp.id}</td>
-          <td>${emp.name}</td>
-          <td>${emp.role}</td>
-          <td>
-            <button class="delete-btn" onclick="deleteEmployee(${emp.id})">Delete</button>
-          </td>
-        </tr>
-      `;
-    });
+/* RENDER TABLE */
+function render(data) {
+  const table = document.getElementById("table");
 
-    document.getElementById("empTable").innerHTML = rows;
+  if (!data || data.length === 0) {
+    table.innerHTML = `
+      <tr>
+        <td colspan="7" style="color:red;font-weight:bold;padding:15px;">
+          Result Not Found
+        </td>
+      </tr>
+    `;
+    return;
   }
 
-  /* Add Employee */
-  async function addEmployee() {
-    const name = document.getElementById("name").value;
-    const role = document.getElementById("role").value;
+  table.innerHTML = data.map((e, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${e.name}</td>
+      <td>${e.role}</td>
+      <td>${e.email || "-"}</td>
+      <td>${e.phone || "-"}</td>
+      <td>${e.dob ? e.dob.split("T")[0] : "-"}</td>
+      <td>
+        <button class="delete" onclick="del(${e.id})">X</button>
+      </td>
+    </tr>
+  `).join("");
+}
 
-    if (!name || !role) {
-      alert("Please fill all fields");
-      return;
-    }
+/* SEARCH */
+async function searchEmployee() {
+  const key = document.getElementById("search").value;
 
-    await fetch(`${API_URL}/employees`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name, role })
-    });
+  const res = await fetch(`${API}?search=${key}`);
+  const data = await res.json();
 
-    document.getElementById("name").value = "";
-    document.getElementById("role").value = "";
+  render(data);
+}
 
-    fetchEmployees();
-  }
+/* RESET */
+function resetSearch() {
+  document.getElementById("search").value = "";
+  load();
+}
 
-  /* Delete Employee */
-  async function deleteEmployee(id) {
-    await fetch(`${API_URL}/employees/${id}`, {
-      method: "DELETE"
-    });
+/* ADD */
+async function addEmployee() {
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: name.value,
+      role: role.value,
+      email: email.value,
+      phone: phone.value,
+      dob: dob.value
+    })
+  });
 
-    fetchEmployees();
-  }
+  load();
 
-  /* Initial Load */
-  fetchEmployees();
+  name.value = "";
+  role.value = "";
+  email.value = "";
+  phone.value = "";
+  dob.value = "";
+}
+
+/* DELETE */
+async function del(id) {
+  await fetch(`${API}/${id}`, { method: "DELETE" });
+  load();
+}
+
+/* INIT */
+load();
+
 </script>
 
 </body>
