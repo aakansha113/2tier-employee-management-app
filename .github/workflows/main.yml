@@ -22,9 +22,9 @@ jobs:
       # 🔥 BUILD IMAGE WITH AUTO VERSION
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/employee-management-app:v1 ./backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/employee-management-app:v2 ./backend
 
       # 🔥 PUSH IMAGE
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/employee-management-app:v1
+          docker push ${{ secrets.DOCKER_USERNAME }}/employee-management-app:v2
