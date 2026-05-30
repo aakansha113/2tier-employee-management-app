@@ -177,27 +177,50 @@ function resetSearch() {
   load();
 }
 
-/* ADD */
+/* ADD - FIXED VERSION */
 async function addEmployee() {
-  await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: name.value,
-      role: role.value,
-      email: email.value,
-      phone: phone.value,
-      dob: dob.value
-    })
-  });
 
-  load();
+  const payload = {
+    name: document.getElementById("name").value,
+    role: document.getElementById("role").value,
+    email: document.getElementById("email").value,
+    phone: document.getElementById("phone").value,
+    dob: document.getElementById("dob").value
+  };
 
-  name.value = "";
-  role.value = "";
-  email.value = "";
-  phone.value = "";
-  dob.value = "";
+  if (!payload.name || !payload.role) {
+    alert("Name and Role are required!");
+    return;
+  }
+
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Error adding employee");
+      return;
+    }
+
+    load();
+
+    document.getElementById("name").value = "";
+    document.getElementById("role").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("dob").value = "";
+
+    console.log("Added:", data);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to add employee");
+  }
 }
 
 /* DELETE */
