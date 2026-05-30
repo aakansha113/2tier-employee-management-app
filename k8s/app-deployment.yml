@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: employee-app
-        image: aakansha113/employee-management-app:v33
+        image: aakansha113/employee-management-app:latest
 
         ports:
         - containerPort: 3000
