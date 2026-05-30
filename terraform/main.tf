@@ -115,6 +115,10 @@ resource "aws_instance" "employee_app" {
   key_name = aws_key_pair.employee_key.key_name
 
   user_data = file("script.sh")
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
 
   tags = {
     Name = "Employee-App-Server"
