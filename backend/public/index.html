@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Management App</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+    }
+
+    button {
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Employee Management System</h2>
+
+  <input type="text" id="name" placeholder="Enter Name" />
+  <input type="text" id="role" placeholder="Enter Role" />
+  <button onclick="addEmployee()">Add Employee</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody id="empTable"></tbody>
+  </table>
+</div>
+
+<script>
+  const API_URL = "http://localhost:3000"; // change if deployed on EC2/K8s
+
+  async function fetchEmployees() {
+    const res = await fetch(`${API_URL}/employees`);
+    const data = await res.json();
+
+    let rows = "";
+    data.forEach(emp => {
+      rows += `
+        <tr>
+          <td>${emp.id}</td>
+          <td>${emp.name}</td>
+          <td>${emp.role}</td>
+        </tr>
+      `;
+    });
+
+    document.getElementById("empTable").innerHTML = rows;
+  }
+
+  async function addEmployee() {
+    const name = document.getElementById("name").value;
+    const role = document.getElementById("role").value;
+
+    await fetch(`${API_URL}/employees`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name, role })
+    });
+
+    document.getElementById("name").value = "";
+    document.getElementById("role").value = "";
+
+    fetchEmployees();
+  }
+
+  fetchEmployees();
+</script>
+
+</body>
+</html>
