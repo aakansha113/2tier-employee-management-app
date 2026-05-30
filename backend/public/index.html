@@ -17,9 +17,7 @@
       padding:20px;
     }
 
-    h2 {
-      text-align:center;
-    }
+    h2 { text-align:center; }
 
     .search-box {
       display:flex;
@@ -126,24 +124,20 @@ const API = "/employees";
 
 /* LOAD */
 async function load() {
-  try {
-    const res = await fetch(API);
-    const data = await res.json();
-    render(data);
-  } catch (err) {
-    console.error("Load error:", err);
-  }
+  const res = await fetch(API);
+  const data = await res.json();
+  render(data, false);   // 👈 default = NOT search
 }
 
-/* RENDER */
-function render(data) {
+/* RENDER (FIXED) */
+function render(data, isSearch) {
   const table = document.getElementById("table");
 
   if (!data || data.length === 0) {
     table.innerHTML = `
       <tr>
-        <td colspan="7" style="color:red;font-weight:bold;padding:15px;">
-          Result Not Found
+        <td colspan="7" style="color:gray;font-weight:bold;padding:15px;">
+          ${isSearch ? "Result Not Found" : "No Employees Yet"}
         </td>
       </tr>
     `;
@@ -172,7 +166,7 @@ async function searchEmployee() {
   const res = await fetch(`${API}?search=${key}`);
   const data = await res.json();
 
-  render(data);
+  render(data, true);   // 👈 search mode
 }
 
 /* RESET */
@@ -181,50 +175,25 @@ function resetSearch() {
   load();
 }
 
-/* ADD (FINAL FIXED VERSION) */
+/* ADD */
 async function addEmployee() {
-
   const payload = {
-    name: document.getElementById("name").value.trim(),
-    role: document.getElementById("role").value.trim(),
-    email: document.getElementById("email").value.trim() || null,
-    phone: document.getElementById("phone").value.trim() || null,
-    dob: document.getElementById("dob").value || null
+    name: name.value.trim(),
+    role: role.value.trim(),
+    email: email.value.trim(),
+    phone: phone.value.trim(),
+    dob: dob.value
   };
 
-  if (!payload.name || !payload.role) {
-    alert("Name and Role are required!");
-    return;
-  }
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
-  try {
-    const res = await fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+  load();
 
-    const data = await res.json();
-
-    console.log("Server Response:", data);
-
-    if (!res.ok) {
-      alert(data.message || data.error || "Error adding employee");
-      return;
-    }
-
-    load();
-
-    document.getElementById("name").value = "";
-    document.getElementById("role").value = "";
-    document.getElementById("email").value = "";
-    document.getElementById("phone").value = "";
-    document.getElementById("dob").value = "";
-
-  } catch (err) {
-    console.error("POST ERROR:", err);
-    alert("Backend not reachable or error occurred");
-  }
+  name.value = role.value = email.value = phone.value = dob.value = "";
 }
 
 /* DELETE */
