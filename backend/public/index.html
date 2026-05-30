@@ -19,6 +19,7 @@
       background: white;
       padding: 20px;
       border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     h2 {
@@ -29,6 +30,8 @@
       width: 100%;
       padding: 10px;
       margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
     button {
@@ -38,6 +41,8 @@
       border: none;
       cursor: pointer;
       width: 100%;
+      border-radius: 5px;
+      margin-top: 5px;
     }
 
     button:hover {
@@ -50,11 +55,8 @@
       border-collapse: collapse;
     }
 
-    table, th, td {
-      border: 1px solid #ddd;
-    }
-
     th, td {
+      border: 1px solid #ddd;
       padding: 10px;
       text-align: center;
     }
@@ -62,6 +64,17 @@
     th {
       background: #007bff;
       color: white;
+    }
+
+    .delete-btn {
+      background: red;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background: darkred;
     }
   </style>
 </head>
@@ -73,6 +86,7 @@
 
   <input type="text" id="name" placeholder="Enter Name" />
   <input type="text" id="role" placeholder="Enter Role" />
+
   <button onclick="addEmployee()">Add Employee</button>
 
   <table>
@@ -81,6 +95,7 @@
         <th>ID</th>
         <th>Name</th>
         <th>Role</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="empTable"></tbody>
@@ -88,19 +103,24 @@
 </div>
 
 <script>
-  const API_URL = "http://localhost:3000"; // change if deployed on EC2/K8s
+  const API_URL = "http://localhost:3000";
 
+  /* Load Employees */
   async function fetchEmployees() {
     const res = await fetch(`${API_URL}/employees`);
     const data = await res.json();
 
     let rows = "";
+
     data.forEach(emp => {
       rows += `
         <tr>
           <td>${emp.id}</td>
           <td>${emp.name}</td>
           <td>${emp.role}</td>
+          <td>
+            <button class="delete-btn" onclick="deleteEmployee(${emp.id})">Delete</button>
+          </td>
         </tr>
       `;
     });
@@ -108,9 +128,15 @@
     document.getElementById("empTable").innerHTML = rows;
   }
 
+  /* Add Employee */
   async function addEmployee() {
     const name = document.getElementById("name").value;
     const role = document.getElementById("role").value;
+
+    if (!name || !role) {
+      alert("Please fill all fields");
+      return;
+    }
 
     await fetch(`${API_URL}/employees`, {
       method: "POST",
@@ -126,6 +152,16 @@
     fetchEmployees();
   }
 
+  /* Delete Employee */
+  async function deleteEmployee(id) {
+    await fetch(`${API_URL}/employees/${id}`, {
+      method: "DELETE"
+    });
+
+    fetchEmployees();
+  }
+
+  /* Initial Load */
   fetchEmployees();
 </script>
 
