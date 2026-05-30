@@ -5,143 +5,115 @@ const path = require("path");
 const app = express();
 
 app.use(express.json());
-
-// Serve static files from public folder
 app.use(express.static("public"));
 
-/* Request Logger */
+/* LOGGER */
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.url} - HIT`);
+  console.log(`📥 ${req.method} ${req.url}`);
   next();
 });
 
-/* Home Page */
+/* DB INIT */
+function waitForDB(retries = 30) {
+  const tryConnect = () => {
+    db.query("SELECT 1", (err) => {
+      if (!err) {
+        console.log("✅ MySQL Connected Successfully");
+
+        db.query(`
+          CREATE TABLE IF NOT EXISTS employees (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            role VARCHAR(100) NOT NULL,
+            email VARCHAR(150),
+            phone VARCHAR(20),
+            dob DATE
+          )
+        `);
+
+      } else {
+        console.log(`⏳ Waiting for DB... retries left: ${retries}`);
+
+        if (retries === 0) process.exit(1);
+
+        retries--;
+        setTimeout(tryConnect, 3000);
+      }
+    });
+  };
+
+  tryConnect();
+}
+
+waitForDB();
+
+/* HOME */
 app.get("/", (req, res) => {
-  console.log("🏠 Employee UI Loaded");
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* Health Check Endpoint */
+/* HEALTH */
 app.get("/health", (req, res) => {
-  console.log("🔍 DB health check called");
-
   db.query("SELECT 1", (err) => {
-    if (err) {
-      console.log("❌ DB ERROR:", err.message);
-
-      return res.status(500).json({
-        status: "DB_NOT_READY",
-        error: err.message
-      });
-    }
-
-    console.log("✅ DB Connected Successfully");
-
-    res.json({
-      status: "OK",
-      message: "DB Connected Successfully"
-    });
+    if (err) return res.status(500).json({ status: "DB_ERROR" });
+    res.json({ status: "OK" });
   });
 });
 
-/* =========================
-   GET ALL EMPLOYEES
-========================= */
+/* GET + SEARCH */
 app.get("/employees", (req, res) => {
-  console.log("📊 Fetching employees from DB");
+  const search = req.query.search;
 
-  db.query("SELECT * FROM employees", (err, result) => {
-    if (err) {
-      console.log("❌ QUERY ERROR:", err.message);
+  let sql = "SELECT * FROM employees";
+  let params = [];
 
-      return res.status(500).json({
-        status: "ERROR",
-        message: err.message
-      });
-    }
+  if (search) {
+    sql = `
+      SELECT * FROM employees
+      WHERE id = ? OR name LIKE ? OR role LIKE ?
+    `;
+    params = [search, `%${search}%`, `%${search}%`];
+  }
 
-    console.log(`✅ Returned ${result.length} employees`);
-
+  db.query(sql, params, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
     res.json(result);
   });
 });
 
-/* =========================
-   ADD EMPLOYEE (POST)
-========================= */
+/* ADD */
 app.post("/employees", (req, res) => {
-  console.log("➕ Adding employee");
+  const { name, role, email, phone, dob } = req.body;
 
-  const { name, email, role } = req.body;
-
-  if (!name || !email || !role) {
-    return res.status(400).json({
-      status: "ERROR",
-      message: "Name, email, and role are required"
-    });
+  if (!name || !role) {
+    return res.status(400).json({ message: "Name & Role required" });
   }
 
-  const sql = "INSERT INTO employees (name, email, role) VALUES (?, ?, ?)";
+  db.query(
+    `INSERT INTO employees (name, role, email, phone, dob)
+     VALUES (?, ?, ?, ?, ?)`,
+    [name, role, email, phone, dob],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-  db.query(sql, [name, email, role], (err, result) => {
-    if (err) {
-      console.log("❌ INSERT ERROR:", err.message);
-
-      return res.status(500).json({
-        status: "ERROR",
-        message: err.message
-      });
+      res.json({ message: "Added", id: result.insertId });
     }
-
-    console.log("✅ Employee added ID:", result.insertId);
-
-    res.json({
-      status: "SUCCESS",
-      message: "Employee added",
-      employeeId: result.insertId
-    });
-  });
+  );
 });
 
-/* =========================
-   DELETE EMPLOYEE
-========================= */
+/* DELETE */
 app.delete("/employees/:id", (req, res) => {
-  console.log("🗑️ Deleting employee");
-
-  const employeeId = req.params.id;
-
-  const sql = "DELETE FROM employees WHERE id = ?";
-
-  db.query(sql, [employeeId], (err, result) => {
-    if (err) {
-      console.log("❌ DELETE ERROR:", err.message);
-
-      return res.status(500).json({
-        status: "ERROR",
-        message: err.message
-      });
+  db.query(
+    "DELETE FROM employees WHERE id=?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: "Deleted" });
     }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        status: "NOT_FOUND",
-        message: "Employee not found"
-      });
-    }
-
-    console.log("✅ Employee deleted ID:", employeeId);
-
-    res.json({
-      status: "SUCCESS",
-      message: "Employee deleted successfully"
-    });
-  });
+  );
 });
 
-/* Start Server */
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+/* START */
+app.listen(3000, () => {
+  console.log("🚀 Server running on 3000");
 });
