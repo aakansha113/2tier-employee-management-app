@@ -117,19 +117,29 @@
   </table>
 
 </div>
-
 <script>
 
 const API = "/employees";
 
 /* LOAD */
 async function load() {
-  const res = await fetch(API);
-  const data = await res.json();
-  render(data, false);   // 👈 default = NOT search
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+    render(data, false);
+  } catch (err) {
+    console.error("LOAD ERROR:", err);
+    document.getElementById("table").innerHTML = `
+      <tr>
+        <td colspan="7" style="color:red;font-weight:bold;">
+          Backend not reachable
+        </td>
+      </tr>
+    `;
+  }
 }
 
-/* RENDER (FIXED) */
+/* RENDER */
 function render(data, isSearch) {
   const table = document.getElementById("table");
 
@@ -161,12 +171,16 @@ function render(data, isSearch) {
 
 /* SEARCH */
 async function searchEmployee() {
-  const key = document.getElementById("search").value;
+  try {
+    const key = document.getElementById("search").value;
 
-  const res = await fetch(`${API}?search=${key}`);
-  const data = await res.json();
+    const res = await fetch(`${API}?search=${key}`);
+    const data = await res.json();
 
-  render(data, true);   // 👈 search mode
+    render(data, true);
+  } catch (err) {
+    console.error("SEARCH ERROR:", err);
+  }
 }
 
 /* RESET */
@@ -175,31 +189,64 @@ function resetSearch() {
   load();
 }
 
-/* ADD */
+/* ADD - FIXED (IMPORTANT PART) */
 async function addEmployee() {
+
   const payload = {
-    name: name.value.trim(),
-    role: role.value.trim(),
-    email: email.value.trim(),
-    phone: phone.value.trim(),
-    dob: dob.value
+    name: document.getElementById("name").value.trim(),
+    role: document.getElementById("role").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    dob: document.getElementById("dob").value
   };
 
-  await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  // validation
+  if (!payload.name || !payload.role) {
+    alert("Name and Role are required!");
+    return;
+  }
 
-  load();
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  name.value = role.value = email.value = phone.value = dob.value = "";
+    const data = await res.json();
+
+    console.log("POST RESPONSE:", data);
+
+    // 🔴 IMPORTANT: show real backend error
+    if (!res.ok) {
+      alert(data.message || data.error || "Add failed (check backend logs)");
+      return;
+    }
+
+    alert("Employee added successfully");
+
+    load();
+
+    document.getElementById("name").value = "";
+    document.getElementById("role").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("dob").value = "";
+
+  } catch (err) {
+    console.error("ADD ERROR:", err);
+    alert("Backend not reachable");
+  }
 }
 
 /* DELETE */
 async function del(id) {
-  await fetch(`${API}/${id}`, { method: "DELETE" });
-  load();
+  try {
+    await fetch(`${API}/${id}`, { method: "DELETE" });
+    load();
+  } catch (err) {
+    console.error("DELETE ERROR:", err);
+  }
 }
 
 /* INIT */
