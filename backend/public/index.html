@@ -124,14 +124,18 @@
 
 const API = "/employees";
 
-/* LOAD ALL */
+/* LOAD */
 async function load() {
-  const res = await fetch(API);
-  const data = await res.json();
-  render(data);
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+    render(data);
+  } catch (err) {
+    console.error("Load error:", err);
+  }
 }
 
-/* RENDER TABLE */
+/* RENDER */
 function render(data) {
   const table = document.getElementById("table");
 
@@ -177,15 +181,15 @@ function resetSearch() {
   load();
 }
 
-/* ADD - FIXED VERSION */
+/* ADD (FINAL FIXED VERSION) */
 async function addEmployee() {
 
   const payload = {
-    name: document.getElementById("name").value,
-    role: document.getElementById("role").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    dob: document.getElementById("dob").value
+    name: document.getElementById("name").value.trim(),
+    role: document.getElementById("role").value.trim(),
+    email: document.getElementById("email").value.trim() || null,
+    phone: document.getElementById("phone").value.trim() || null,
+    dob: document.getElementById("dob").value || null
   };
 
   if (!payload.name || !payload.role) {
@@ -202,8 +206,10 @@ async function addEmployee() {
 
     const data = await res.json();
 
+    console.log("Server Response:", data);
+
     if (!res.ok) {
-      alert(data.message || "Error adding employee");
+      alert(data.message || data.error || "Error adding employee");
       return;
     }
 
@@ -215,11 +221,9 @@ async function addEmployee() {
     document.getElementById("phone").value = "";
     document.getElementById("dob").value = "";
 
-    console.log("Added:", data);
-
   } catch (err) {
-    console.error(err);
-    alert("Failed to add employee");
+    console.error("POST ERROR:", err);
+    alert("Backend not reachable or error occurred");
   }
 }
 
