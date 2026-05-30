@@ -1,56 +1,21 @@
-const express = require("express");
-const db = require("./db");
-const path = require("path");
+/* Add Employee */
+app.post("/employees", (req, res) => {
+  console.log("➕ Adding new employee");
 
-const app = express();
+  const { name, email, role } = req.body;
 
-app.use(express.json());
-
-// Serve static files from public folder
-app.use(express.static("public"));
-
-/* Request Logger */
-app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.url} - HIT`);
-  next();
-});
-
-/* Home Page */
-app.get("/", (req, res) => {
-  console.log("🏠 Employee UI Loaded");
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-/* Health Check Endpoint */
-app.get("/health", (req, res) => {
-  console.log("🔍 DB health check called");
-
-  db.query("SELECT 1", (err) => {
-    if (err) {
-      console.log("❌ DB ERROR:", err.message);
-
-      return res.status(500).json({
-        status: "DB_NOT_READY",
-        error: err.message
-      });
-    }
-
-    console.log("✅ DB Connected Successfully");
-
-    res.json({
-      status: "OK",
-      message: "DB Connected Successfully"
+  if (!name || !email || !role) {
+    return res.status(400).json({
+      status: "ERROR",
+      message: "Name, email, and role are required"
     });
-  });
-});
+  }
 
-/* Get All Employees */
-app.get("/employees", (req, res) => {
-  console.log("📊 Fetching employees from DB");
+  const sql = "INSERT INTO employees (name, email, role) VALUES (?, ?, ?)";
 
-  db.query("SELECT * FROM employees", (err, result) => {
+  db.query(sql, [name, email, role], (err, result) => {
     if (err) {
-      console.log("❌ QUERY ERROR:", err.message);
+      console.log("❌ INSERT ERROR:", err.message);
 
       return res.status(500).json({
         status: "ERROR",
@@ -58,15 +23,12 @@ app.get("/employees", (req, res) => {
       });
     }
 
-    console.log(`✅ Returned ${result.length} employees`);
+    console.log("✅ Employee added with ID:", result.insertId);
 
-    res.json(result);
+    res.json({
+      status: "SUCCESS",
+      message: "Employee added successfully",
+      employeeId: result.insertId
+    });
   });
-});
-
-/* Start Server */
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
 });
