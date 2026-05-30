@@ -6,24 +6,29 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: 3306,
+
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
+// Health check query instead of just connection
 function waitForDB(retries = 30) {
   const tryConnect = () => {
-    pool.getConnection((err, conn) => {
+    pool.query("SELECT 1", (err) => {
       if (!err) {
         console.log("✅ MySQL Connected Successfully");
-        return conn.release();
-      }
-
-      if (retries <= 0) {
-        console.log("❌ DB Connection Failed Permanently");
         return;
       }
 
-      console.log("⏳ Waiting for MySQL... retries left:", retries);
+      if (retries <= 0) {
+        console.error("❌ DB Connection Failed Permanently");
+
+        // Optional (GOOD for Kubernetes restart)
+        process.exit(1);
+      }
+
+      console.log(`⏳ Waiting for MySQL... retries left: ${retries}`);
       retries--;
 
       setTimeout(tryConnect, 3000);
