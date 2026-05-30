@@ -1,23 +1,27 @@
 const express = require("express");
 const db = require("./db");
+const path = require("path");
 
 const app = express();
 
 app.use(express.json());
 
-/* 🔥 LIVE REQUEST LOGGER (ADD THIS) */
+// Serve static files from public folder
+app.use(express.static("public"));
+
+/* Request Logger */
 app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.url} - HIT`);
   next();
 });
 
-// Health check (VERY IMPORTANT for Kubernetes debugging)
+/* Home Page */
 app.get("/", (req, res) => {
-  console.log("🏠 Root endpoint accessed");
-  res.send("🚀 Successfully Done with - 2 Tier App Running on Kubernetes");
+  console.log("🏠 Employee UI Loaded");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// DB test endpoint
+/* Health Check Endpoint */
 app.get("/health", (req, res) => {
   console.log("🔍 DB health check called");
 
@@ -35,12 +39,12 @@ app.get("/health", (req, res) => {
 
     res.json({
       status: "OK",
-      message: "DB Connected"
+      message: "DB Connected Successfully"
     });
   });
 });
 
-// Employees API
+/* Get All Employees */
 app.get("/employees", (req, res) => {
   console.log("📊 Fetching employees from DB");
 
@@ -54,13 +58,15 @@ app.get("/employees", (req, res) => {
       });
     }
 
-    console.log(`✅ Returned ${result.length} rows`);
+    console.log(`✅ Returned ${result.length} employees`);
 
     res.json(result);
   });
 });
 
-// Server start
-app.listen(3000, () => {
-  console.log("🚀 Server running on port 3000");
+/* Start Server */
+const PORT = 3000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
