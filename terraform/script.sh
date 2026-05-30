@@ -73,3 +73,8 @@ sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
 # ---------------- Install Calico Network Plugin ----------------
 
 su - ubuntu -c "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.4/manifests/calico.yaml"
+
+# ----------------- Install git ----------------------
+
+sudo apt install git -y
+git clone https://github.com/aakansha113/2tier-employee-management-app.git
