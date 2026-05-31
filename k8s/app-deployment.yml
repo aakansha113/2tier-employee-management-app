@@ -15,7 +15,7 @@ spec:
       containers:
       - name: employee-app
         image: aakansha113/employee-management-app:v3
-
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
 
