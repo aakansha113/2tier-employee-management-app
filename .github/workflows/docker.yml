@@ -19,12 +19,25 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 🔥 BUILD IMAGE WITH AUTO VERSION
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/employee-management-app:v3 ./backend
 
-      # 🔥 PUSH IMAGE
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/employee-management-app:v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Kubernetes
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            kubectl rollout restart deployment employee-app
+            kubectl rollout status deployment employee-app
