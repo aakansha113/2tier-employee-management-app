@@ -48,17 +48,33 @@ jobs:
 
             echo "🚀 Deploying image: $IMAGE"
 
-            # Check kubectl is working
-            kubectl get nodes
+            # -----------------------------
+            # STEP 1: Ensure deployment exists
+            # -----------------------------
+            echo "📦 Ensuring Kubernetes deployment exists..."
 
-            # Update deployment
+            kubectl apply -f https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/k8s/app-deployment.yml
+
+            # -----------------------------
+            # STEP 2: Update image
+            # -----------------------------
+            echo "🔄 Updating deployment image..."
+
             kubectl set image deployment/employee-app \
             employee-app=$IMAGE
 
-            # Wait for rollout
-            kubectl rollout status deployment/employee-app --timeout=120s
+            # -----------------------------
+            # STEP 3: Wait for rollout
+            # -----------------------------
+            echo "⏳ Waiting for rollout..."
 
-            # Verify pods
+            kubectl rollout status deployment/employee-app --timeout=180s
+
+            # -----------------------------
+            # STEP 4: Verify deployment
+            # -----------------------------
+            echo "📊 Checking pods..."
+
             kubectl get pods
 
             echo "✅ Deployment successful"
