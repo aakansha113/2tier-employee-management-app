@@ -22,18 +22,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set Image Tag
-        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
-
       - name: Build Docker Image
         run: |
           echo "🔨 Building image..."
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG} ./backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${IMAGE_NAME}:latest ./backend
 
       - name: Push Docker Image
         run: |
           echo "📤 Pushing image..."
-          docker push ${{ secrets.DOCKER_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}
+          docker push ${{ secrets.DOCKER_USERNAME }}/${IMAGE_NAME}:latest
 
   deploy:
     needs: build
@@ -50,7 +47,7 @@ jobs:
 
             set -e
 
-            IMAGE="${{ secrets.DOCKER_USERNAME }}/employee-management-app:${GITHUB_SHA::7}"
+            IMAGE="${{ secrets.DOCKER_USERNAME }}/employee-management-app:latest"
 
             echo "🚀 Deploying image: $IMAGE"
 
@@ -70,28 +67,28 @@ jobs:
             kubectl apply -f .
 
             # -----------------------------
-            # STEP 3: Safe rollout restart (IMPORTANT FIX)
-            # -----------------------------
-            kubectl rollout restart deployment/employee-app
-
-            # -----------------------------
-            # STEP 4: Update image
+            # STEP 3: Update image (IMPORTANT FIX)
             # -----------------------------
             kubectl set image deployment/employee-app employee-app=$IMAGE
 
             # -----------------------------
-            # STEP 5: Force fresh pull
+            # STEP 4: Ensure fresh pull
             # -----------------------------
             kubectl patch deployment employee-app -p \
               '{"spec":{"template":{"spec":{"containers":[{"name":"employee-app","imagePullPolicy":"Always"}]}}}}'
 
             # -----------------------------
-            # STEP 6: Wait for rollout (FIXED timeout)
+            # STEP 5: Restart deployment cleanly
+            # -----------------------------
+            kubectl rollout restart deployment/employee-app
+
+            # -----------------------------
+            # STEP 6: Wait for rollout
             # -----------------------------
             kubectl rollout status deployment/employee-app --timeout=300s
 
             # -----------------------------
-            # STEP 7: Verify deployment
+            # STEP 7: Verify
             # -----------------------------
             kubectl get pods -o wide
             kubectl get svc
