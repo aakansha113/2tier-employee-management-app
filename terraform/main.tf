@@ -1,7 +1,5 @@
 # ---------------- VPC ----------------
 
-# ---------------- VPC ----------------
-
 resource "aws_vpc" "employee_vpc" {
   count      = var.create_vpc ? 1 : 0
   cidr_block = "10.0.0.0/16"
@@ -141,8 +139,6 @@ locals {
     aws_key_pair.employee_key[0].key_name :
     data.aws_key_pair.existing_key[0].key_name
 }
-# ---------------- EC2 ----------------
-
 # ---------------- EC2 ----------------
 
 resource "aws_instance" "employee_app" {
