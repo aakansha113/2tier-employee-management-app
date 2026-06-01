@@ -13,6 +13,18 @@ variable "ami_id" {
   default     = "ami-0f918f7e67a3323f0"
 }
 
+variable "create_vpc" {
+  description = "Create a new VPC or use existing one"
+  type        = bool
+  default     = true
+}
+
+variable "existing_vpc_name" {
+  description = "Existing VPC Name"
+  type        = string
+  default     = "employee-vpc"
+}
+
 variable "create_key_pair" {
   description = "Create a new key pair or use existing one"
   type        = bool
