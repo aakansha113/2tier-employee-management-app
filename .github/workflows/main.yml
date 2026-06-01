@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  IMAGE_NAME: employee-management-app
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,15 +22,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set Image Tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Build Docker Image
         run: |
-          echo "🔨 Building image with tag: ${{ github.run_number }}"
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/employee-management-app:${{ github.run_number }} ./backend
+          echo "🔨 Building image..."
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG} ./backend
 
       - name: Push Docker Image
         run: |
           echo "📤 Pushing image..."
-          docker push ${{ secrets.DOCKER_USERNAME }}/employee-management-app:${{ github.run_number }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}
 
   deploy:
     needs: build
@@ -44,37 +50,25 @@ jobs:
 
             set -e
 
-            IMAGE=${{ secrets.DOCKER_USERNAME }}/employee-management-app:${{ github.run_number }}
+            IMAGE="${{ secrets.DOCKER_USERNAME }}/employee-management-app:${GITHUB_SHA::7}"
 
             echo "🚀 Deploying image: $IMAGE"
 
-            # -----------------------------
-            # STEP 1: Ensure deployment exists
-            # -----------------------------
-            echo "📦 Ensuring Kubernetes deployment exists..."
+            # STEP 1: Apply full k8s manifests (important fix)
+            kubectl apply -f https://raw.githubusercontent.com/aakansha113/2tier-employee-management-app/main/k8s/
 
-            kubectl apply -f https://raw.githubusercontent.com/aakansha113/2tier-employee-management-app/main/k8s/app-deployment.yml
+            # STEP 2: Force new image rollout
+            kubectl set image deployment/employee-app employee-app=$IMAGE
 
-            # -----------------------------
-            # STEP 2: Update image
-            # -----------------------------
-            echo "🔄 Updating deployment image..."
+            # STEP 3: Ensure fresh pull of image
+            kubectl patch deployment employee-app -p \
+              '{"spec":{"template":{"spec":{"containers":[{"name":"employee-app","imagePullPolicy":"Always"}]}}}}'
 
-            kubectl set image deployment/employee-app \
-            employee-app=$IMAGE
-
-            # -----------------------------
-            # STEP 3: Wait for rollout
-            # -----------------------------
-            echo "⏳ Waiting for rollout..."
-
+            # STEP 4: Wait for rollout
             kubectl rollout status deployment/employee-app --timeout=180s
 
-            # -----------------------------
-            # STEP 4: Verify deployment
-            # -----------------------------
-            echo "📊 Checking pods..."
-
-            kubectl get pods
+            # STEP 5: Verify
+            kubectl get pods -o wide
+            kubectl get svc
 
             echo "✅ Deployment successful"
