@@ -18,12 +18,6 @@ data "aws_vpc" "existing_vpc" {
   }
 }
 
-locals {
-  vpc_id = var.create_vpc ?
-    aws_vpc.employee_vpc[0].id :
-    data.aws_vpc.existing_vpc[0].id
-}
-
 # ---------------- Public Subnet ----------------
 
 resource "aws_subnet" "employee_public_subnet" {
@@ -95,6 +89,7 @@ resource "aws_security_group" "employee_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   ingress {
     from_port   = 30007
     to_port     = 30007
@@ -105,6 +100,13 @@ resource "aws_security_group" "employee_sg" {
   ingress {
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9000
+    to_port     = 9000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -134,11 +136,13 @@ data "aws_key_pair" "existing_key" {
   key_name = "employees-key"
 }
 
+# ---------------- Locals ----------------
+
 locals {
-  key_name = var.create_key_pair ?
-    aws_key_pair.employee_key[0].key_name :
-    data.aws_key_pair.existing_key[0].key_name
+  vpc_id   = var.create_vpc ? aws_vpc.employee_vpc[0].id : data.aws_vpc.existing_vpc[0].id
+  key_name = var.create_key_pair ? aws_key_pair.employee_key[0].key_name : data.aws_key_pair.existing_key[0].key_name
 }
+
 # ---------------- EC2 ----------------
 
 resource "aws_instance" "employee_app" {
