@@ -55,7 +55,7 @@ jobs:
             echo "🚀 Deploying image: $IMAGE"
 
             # -----------------------------
-            # STEP 1: Clone / update repo
+            # STEP 1: Clone or update repo
             # -----------------------------
             if [ ! -d "2tier-employee-management-app" ]; then
               git clone https://github.com/aakansha113/2tier-employee-management-app.git
@@ -64,29 +64,34 @@ jobs:
             fi
 
             # -----------------------------
-            # STEP 2: Apply Kubernetes manifests
+            # STEP 2: Apply Kubernetes YAMLs
             # -----------------------------
             cd 2tier-employee-management-app/k8s
             kubectl apply -f .
 
             # -----------------------------
-            # STEP 3: Update deployment image
+            # STEP 3: Safe rollout restart (IMPORTANT FIX)
+            # -----------------------------
+            kubectl rollout restart deployment/employee-app
+
+            # -----------------------------
+            # STEP 4: Update image
             # -----------------------------
             kubectl set image deployment/employee-app employee-app=$IMAGE
 
             # -----------------------------
-            # STEP 4: Force fresh image pull
+            # STEP 5: Force fresh pull
             # -----------------------------
             kubectl patch deployment employee-app -p \
               '{"spec":{"template":{"spec":{"containers":[{"name":"employee-app","imagePullPolicy":"Always"}]}}}}'
 
             # -----------------------------
-            # STEP 5: Wait for rollout
+            # STEP 6: Wait for rollout (FIXED timeout)
             # -----------------------------
-            kubectl rollout status deployment/employee-app --timeout=180s
+            kubectl rollout status deployment/employee-app --timeout=300s
 
             # -----------------------------
-            # STEP 6: Verify deployment
+            # STEP 7: Verify deployment
             # -----------------------------
             kubectl get pods -o wide
             kubectl get svc
