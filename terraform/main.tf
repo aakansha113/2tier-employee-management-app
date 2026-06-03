@@ -125,8 +125,6 @@ resource "aws_security_group" "employee_sg" {
 
 # ---------------- Key Pair ----------------
 
-# ---------------- Key Pair ----------------
-
 resource "aws_key_pair" "employee_key" {
   count      = var.create_key_pair ? 1 : 0
   key_name   = "employees-key"
@@ -148,13 +146,6 @@ locals {
   ) : (
     data.aws_key_pair.existing_key[0].key_name
   )
-}
-
-# ---------------- Locals ----------------
-
-locals {
-  vpc_id   = var.create_vpc ? aws_vpc.employee_vpc[0].id : data.aws_vpc.existing_vpc[0].id
-  key_name = var.create_key_pair ? aws_key_pair.employee_key[0].key_name : data.aws_key_pair.existing_key[0].key_name
 }
 
 # ---------------- EC2 ----------------
