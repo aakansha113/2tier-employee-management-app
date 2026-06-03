@@ -122,22 +122,21 @@ resource "aws_security_group" "employee_sg" {
     Name = "employee-sg"
   }
 }
-
-# ---------------- Key Pair ----------------
+# ---------------- key pairs  ----------------
 
 resource "aws_key_pair" "employee_key" {
-key_name   = "employees-key"
-public_key = file("${path.module}/employees.pub")
-}
+  count      = var.create_key_pair ? 1 : 0
 
+  key_name   = "employees-key"
+  public_key = file("${path.module}/employees.pub")
+}
 # ---------------- Locals ----------------
 
 locals {
-vpc_id = var.create_vpc ? aws_vpc.employee_vpc[0].id : data.aws_vpc.existing_vpc[0].id
+  vpc_id = var.create_vpc ? aws_vpc.employee_vpc[0].id : data.aws_vpc.existing_vpc[0].id
 
-key_name = aws_key_pair.employee_key.key_name
+  key_name = var.create_key_pair ? aws_key_pair.employee_key[0].key_name : var.existing_key_name
 }
-
 # ---------------- EC2 ----------------
 
 resource "aws_instance" "employee_app" {
